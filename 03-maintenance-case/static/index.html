@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <title>
+   기존 프로그램 FIX 사례
+  </title>
+  <link href="/static/style.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <header>
+   <strong>
+    FIX / 주문 동기화 유지보수
+   </strong>
+   <span>
+    버그 수정 · API 연동 · 기능 추가
+   </span>
+  </header>
+  <main>
+   <span class="badge">
+    오류가 나던 프로그램을 안정적인 업무 도구로
+   </span>
+   <h1>
+    같은 주문 데이터. 다른 처리 결과.
+   </h1>
+   <p class="muted">
+    API 503·중복 주문·잘못된 가격을 주입한 공개 데모 사례입니다. 실제 고객 납품 사례로 표시하지 않습니다.
+   </p>
+   <div class="two">
+    <section class="card">
+     <h2>
+      BEFORE · 기존 프로그램
+     </h2>
+     <p>
+      API 오류에 멈춤 / 중복 저장 / CSV만 지원
+     </p>
+     <button class="danger" id="before">
+      오류 있는 버전 실행
+     </button>
+     <p id="before-status" role="status">
+      실행 준비
+     </p>
+     <div class="metrics">
+      <div class="metric">
+       처리 행
+       <strong id="before-count">
+        —
+       </strong>
+      </div>
+      <div class="metric">
+       중복 행
+       <strong id="before-duplicates">
+        —
+       </strong>
+      </div>
+      <div class="metric">
+       재시도
+       <strong id="before-retries">
+        —
+       </strong>
+      </div>
+     </div>
+     <pre id="before-log">실행 로그가 여기에 표시됩니다.</pre>
+     <div class="row" id="before-files">
+     </div>
+    </section>
+    <section class="card">
+     <h2>
+      AFTER · 수정한 프로그램
+     </h2>
+     <p>
+      재시도 / 데이터 검증 / 중복 제거 / CSV + Excel
+     </p>
+     <button id="after">
+      수정된 버전 실행
+     </button>
+     <p id="after-status" role="status">
+      실행 준비
+     </p>
+     <div class="metrics">
+      <div class="metric">
+       저장 주문
+       <strong id="after-count">
+        —
+       </strong>
+      </div>
+      <div class="metric">
+       제거 중복
+       <strong id="after-duplicates">
+        —
+       </strong>
+      </div>
+      <div class="metric">
+       재시도
+       <strong id="after-retries">
+        —
+       </strong>
+      </div>
+     </div>
+     <pre id="after-log">실행 로그가 여기에 표시됩니다.</pre>
+     <div class="row" id="after-files">
+     </div>
+    </section>
+   </div>
+   <section class="card">
+    <h2>
+     새로 만드는 일도, 지금 쓰는 코드를 고치는 일도.
+    </h2>
+    <p>
+     API 오류 해결 · 저장 오류 수정 · 기능 추가 · 구조 정리
+    </p>
+    <p class="muted" id="summary">
+     두 버전을 실행해 결과를 비교하세요. 처리 시간은 실제 측정값이며 성능 우위를 주장하지 않습니다.
+    </p>
+   </section>
+  </main>
+  <script>
+   const $=id=>document.getElementById(id);for(const version of ['before','after'])$(version).onclick=()=>run(version);
+async function run(v){$(v).disabled=true;$(v+'-files').replaceChildren();try{const r=await fetch('/api/run/'+v,{method:'POST'}),d=await r.json();if(!r.ok)throw Error(d.detail);poll(v,d.id)}catch(e){$(v+'-status').textContent=e.message;$(v).disabled=false}}
+async function poll(v,id){try{const r=await fetch('/api/jobs/'+id),d=await r.json();if(!r.ok)throw Error(d.detail);$(v+'-log').textContent=d.logs.join('\n');if(d.status==='running'){$(v+'-status').textContent='처리 중…';setTimeout(()=>poll(v,id),200);return}$(v).disabled=false;$(v+'-status').textContent=(d.status==='done'?'완료':'중단')+' · 실제 처리 시간 '+d.elapsed_ms+'ms';$(v+'-count').textContent=d.rows.length;$(v+'-duplicates').textContent=d.duplicates;$(v+'-retries').textContent=d.retries;$(v+'-log').textContent=d.logs.concat(d.errors).join('\n');for(const name of d.files){const a=document.createElement('a');a.className='button secondary';a.textContent=name;a.href='/api/jobs/'+id+'/files/'+encodeURIComponent(name);$(v+'-files').append(a)}if(v==='after'&&d.status==='done')$('summary').textContent='정상 주문 '+d.rows.length+'건 저장 · 중복 '+d.duplicates+'건 제거 · API 재시도 '+d.retries+'회 · 오류 데이터 '+d.errors.length+'건 제외'}catch(e){$(v+'-status').textContent=e.message;$(v).disabled=false}}
+  </script>
+ </body>
+</html>

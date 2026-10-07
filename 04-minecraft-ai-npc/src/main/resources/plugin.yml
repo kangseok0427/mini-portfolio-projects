@@ -1,0 +1,17 @@
+name: GaonAINPC
+version: '1.0.0'
+main: dev.gaon.ainpc.AiNpcPlugin
+api-version: '26.2'
+description: Personality-driven NPC dialogue with isolated player memories
+authors: [Gaon]
+commands:
+  ainpc:
+    description: Create and talk to AI NPCs
+    usage: /ainpc help
+permissions:
+  ainpc.use:
+    description: Talk to NPCs
+    default: true
+  ainpc.admin:
+    description: Manage NPCs and configuration
+    default: op

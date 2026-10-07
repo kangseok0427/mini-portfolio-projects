@@ -1,0 +1,12 @@
+Bundled third-party components:
+
+Gson 2.13.2 (relocated as dev.gaon.ainpc.internal.gson)
+Copyright Google Inc. and Gson contributors. Apache License 2.0.
+Source: https://github.com/google/gson
+
+Error Prone annotations 2.41.0
+Copyright Google Inc. and Error Prone contributors. Apache License 2.0.
+Source: https://github.com/google/error-prone
+
+The Apache License 2.0 text is included as META-INF/LICENSE-Apache-2.0.txt.
+Paper API and Minecraft server binaries are not bundled.

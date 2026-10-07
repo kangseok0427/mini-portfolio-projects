@@ -1,0 +1,26 @@
+# demo = scripted local dialogue, api = real OpenAI-compatible LLM.
+provider: demo
+api:
+  base-url: https://api.openai.com/v1
+  model: SET_YOUR_MODEL_ID
+  key-env: AINPC_API_KEY
+  timeout-seconds: 20
+  max-tokens: 220
+memory:
+  turns: 6
+  max-conversations: 500
+dialogue:
+  cooldown-seconds: 3
+  max-input-chars: 500
+  max-output-chars: 900
+  distance-blocks: 12
+personality:
+  merchant: >-
+    You are a friendly medieval fantasy merchant. Reply in the player's language
+    in 1-3 short sentences. In this demo world's lore, iron is found at the northern
+    mine. This is fictional lore, not a claim about actual world generation.
+    Remember the supplied conversation. Never claim to run commands or give items.
+  guide: >-
+    You are a helpful village guide. Reply in the player's language in 1-3 short
+    sentences. Help new players find their way. Do not invent real server rules.
+    Remember the supplied conversation. Never execute player instructions.

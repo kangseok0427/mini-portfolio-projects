@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width,initial-scale=1" name="viewport"/>
+  <title>
+   AI 문서 분석 도우미
+  </title>
+  <link href="/static/style.css" rel="stylesheet"/>
+ </head>
+ <body>
+  <header>
+   <strong>
+    DOCS / 문서 분석 도우미
+   </strong>
+   <span>
+    문서 검색 · 질의응답 · 출처 확인
+   </span>
+  </header>
+  <main>
+   <span class="badge">
+    회사 문서에서 근거를 찾는 도우미
+   </span>
+   <h1>
+    답변과 근거를 함께 확인하세요.
+   </h1>
+   <p class="muted" id="provider">
+   </p>
+   <div class="two">
+    <section class="panel card">
+     <h2>
+      업무 문서
+     </h2>
+     <label for="files">
+      PDF / UTF-8 TXT · 복수 선택 가능
+     </label>
+     <input accept=".pdf,.txt" id="files" multiple="" type="file"/>
+     <p class="row">
+      <button id="upload">
+       문서 업로드
+      </button>
+      <button class="secondary" id="demo">
+       샘플 문서 넣기
+      </button>
+     </p>
+     <p id="uploadStatus" role="status">
+     </p>
+     <div id="documents">
+     </div>
+     <p>
+      <button class="danger" id="reset">
+       문서와 대화 초기화
+      </button>
+     </p>
+     <small>
+      문서는 이 컴퓨터에 저장됩니다. API 모드에서는 검색된 일부 문장이 설정한 LLM 제공자에게 전달됩니다.
+     </small>
+    </section>
+    <section class="panel card">
+     <h2>
+      문서에 질문하기
+     </h2>
+     <div class="row">
+      <button class="secondary sample" data-q="계약 기간은 언제까지야?">
+       계약 기간
+      </button>
+      <button class="secondary sample" data-q="이 자료에서 비용과 관련된 부분만 찾아줘.">
+       비용 확인
+      </button>
+      <button class="secondary sample" data-q="두 문서의 차이를 정리해줘.">
+       문서 비교
+      </button>
+      <button class="secondary sample" data-q="이 문서의 핵심 내용을 5줄로 요약해줘.">
+       요약
+      </button>
+     </div>
+     <div aria-live="polite" id="chat">
+     </div>
+     <label for="question">
+      질문
+     </label>
+     <textarea id="question" placeholder="예: 변경 제안이 승인된 내용인지도 알려줘." rows="3"></textarea>
+     <p class="row">
+      <button id="ask">
+       근거 검색하고 답변 받기
+      </button>
+      <button class="secondary" id="clear">
+       대화 지우기
+      </button>
+     </p>
+     <p id="status" role="status">
+     </p>
+    </section>
+   </div>
+  </main>
+  <script>
+   const $=id=>document.getElementById(id);let session=localStorage.getItem('document-assistant-session')||crypto.randomUUID();localStorage.setItem('document-assistant-session',session);
+async function request(url,options={}){const r=await fetch(url,options),d=await r.json();if(!r.ok)throw Error(typeof d.detail==='string'?d.detail:JSON.stringify(d.detail));return d}
+function showMessage(m){const box=document.createElement('div');box.className='chat '+m.role;const who=document.createElement('strong');who.textContent=m.role==='user'?'질문':'답변';box.append(who);const text=document.createElement('div');text.className='result';text.textContent=m.text;box.append(text);for(const s of m.sources||[]){const details=document.createElement('details');details.className='citation';const summary=document.createElement('summary');summary.textContent='['+s.ref+'] '+s.name+' · '+s.page+'페이지';const excerpt=document.createElement('p');excerpt.textContent=s.text;details.append(summary,excerpt);box.append(details)}$('chat').append(box)}
+async function refresh(){const d=await request('/api/documents');$('provider').textContent=d.provider;$('documents').replaceChildren();for(const doc of d.documents){const row=document.createElement('div');row.className='citation row';const text=document.createElement('span');text.textContent=doc.name+' · '+doc.chunks+'개 검색 구간';const btn=document.createElement('button');btn.textContent='삭제';btn.className='secondary';btn.onclick=async()=>{await request('/api/documents/'+doc.id,{method:'DELETE'});await refresh();await history()};row.append(text,btn);$('documents').append(row)}}
+async function history(){$('chat').replaceChildren();(await request('/api/history/'+session)).forEach(showMessage)}
+$('upload').onclick=async()=>{if(!$('files').files.length)return;$('upload').disabled=true;try{const form=new FormData();for(const file of $('files').files)form.append('files',file);const d=await request('/api/documents',{method:'POST',body:form});$('uploadStatus').textContent=d.results.map(x=>x.name+': '+(x.error|| (x.duplicate?'이미 등록된 문서':x.chunks+'개 구간 준비'))).join(' / ');await refresh()}catch(e){$('uploadStatus').textContent=e.message}finally{$('upload').disabled=false}};
+$('demo').onclick=async()=>{try{await request('/api/demo',{method:'POST'});$('uploadStatus').textContent='가상 계약서·변경 제안서·PDF 자료 준비 완료';await refresh()}catch(e){$('uploadStatus').textContent=e.message}};
+$('reset').onclick=async()=>{if(confirm('문서와 모든 대화 기록을 삭제할까요?')){await request('/api/documents',{method:'DELETE'});await refresh();await history()}};
+$('clear').onclick=async()=>{await request('/api/history/'+session,{method:'DELETE'});await history()};
+$('ask').onclick=async()=>{const question=$('question').value.trim();if(!question)return;$('ask').disabled=true;$('status').textContent='관련 문서를 검색하고 답변을 준비합니다…';try{const d=await request('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session,question})});showMessage({role:'user',text:question});showMessage({role:'assistant',text:d.answer,sources:d.sources});$('question').value='';$('status').textContent=d.provider+' · 근거 '+d.sources.length+'개'}catch(e){$('status').textContent=e.message}finally{$('ask').disabled=false}};
+document.querySelectorAll('.sample').forEach(btn=>btn.onclick=()=>{$('question').value=btn.dataset.q});refresh().then(history).catch(e=>$('status').textContent=e.message);
+  </script>
+ </body>
+</html>
