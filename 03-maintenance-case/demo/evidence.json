@@ -1,0 +1,11 @@
+{
+  "mode": "local sample; actual browser/API execution",
+  "project": "03-maintenance-case",
+  "before_rows": 3,
+  "after_rows": 5,
+  "removed_duplicates": 2,
+  "retries": 1,
+  "excel_rows": 6,
+  "video_bytes": 315210,
+  "browser_errors": []
+}

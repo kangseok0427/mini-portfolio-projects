@@ -10,3 +10,4 @@ target/
 .DS_Store
 *.log
 *.pyc
+tmp/

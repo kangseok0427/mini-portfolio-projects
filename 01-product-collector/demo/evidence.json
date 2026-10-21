@@ -1,0 +1,9 @@
+{
+  "mode": "local sample; actual browser/API execution",
+  "project": "01-product-collector",
+  "rows": 5,
+  "duplicates": 1,
+  "excel_rows": 6,
+  "video_bytes": 177222,
+  "browser_errors": []
+}

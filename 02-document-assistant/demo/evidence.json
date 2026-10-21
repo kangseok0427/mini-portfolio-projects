@@ -1,0 +1,8 @@
+{
+  "mode": "local sample; actual browser/API execution",
+  "project": "02-document-assistant",
+  "documents": 3,
+  "citations": 2,
+  "video_bytes": 369389,
+  "browser_errors": []
+}
